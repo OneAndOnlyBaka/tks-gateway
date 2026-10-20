@@ -1,0 +1,33 @@
+[build-system]
+requires = ["setuptools>=77"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "tks-gateway"
+version = "0.1.0"
+description = "Commissioning of the Gira TK gateway 1290 00 – reverse-engineered Python re-implementation of software V1.01"
+license = "MIT"
+authors = [{ name = "OneAndOnlyBaka" }]
+license-files = ["LICENSE"]
+requires-python = ">=3.10"
+dependencies = ["pyserial>=3.5", "flask>=3.0"]
+
+[project.urls]
+Source = "https://github.com/OneAndOnlyBaka/tks-gateway"
+Issues = "https://github.com/OneAndOnlyBaka/tks-gateway/issues"
+
+[project.optional-dependencies]
+test = ["pytest", "playwright"]
+
+[project.scripts]
+tks-gateway = "tks_gateway.cli:main"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.setuptools.package-data]
+tks_gateway = ["templates/*.html", "static/*", "static/vendor/*"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["src"]

@@ -1,0 +1,265 @@
+<nav class="help-toc" aria-label="Inhalt">
+  <strong>Inhalt</strong>
+  <a href="#h-start">Schnellstart</a>
+  <a href="#h-connect">Gateway anschließen</a>
+  <a href="#h-basics">So arbeitet das Tool</a>
+  <a href="#h-backup">Sichern und wiederherstellen</a>
+  <a href="#h-config">Einstellungen ändern</a>
+  <a href="#h-phonebook">Telefonbuch bearbeiten</a>
+  <a href="#h-learn">Ruftasten anlernen</a>
+  <a href="#h-pbx">Telefonanlage verbinden und testen</a>
+  <a href="#h-log">Bus mitlesen (Loggen)</a>
+  <a href="#h-firmware">Firmware aktualisieren</a>
+  <a href="#h-more">Telefon-Codes, Lizenzen, Sprache</a>
+  <a href="#h-trouble">Fehlersuche</a>
+  <a href="#h-docs">Weitere Dokumentation</a>
+</nav>
+
+<div class="help-body">
+
+<section id="h-start">
+  <h2>Schnellstart</h2>
+  <pre class="mermaid">
+flowchart LR
+  A["Schnittstelle wählen<br/>(Kopfzeile)"] --> B["Verbindung testen"]
+  B --> C["Aus Gateway laden"]
+  C --> D["Sicherung:<br/>Rohabbild (.bin)"]
+  D --> E["Konfiguration und<br/>Telefonbuch bearbeiten"]
+  E --> F["In Gateway speichern"]
+  </pre>
+  <ol>
+    <li>Oben die Schnittstelle des USB-TTL-Adapters wählen (<strong>↻</strong> sucht erneut).</li>
+    <li><strong>Verbindung testen</strong> klicken – das Abzeichen zeigt die Firmwarestände.</li>
+    <li>Im Reiter <em>Konfiguration</em> auf <strong>Aus Gateway laden</strong> klicken. Bis dahin zeigt die
+      Oberfläche nur Standardwerte.</li>
+    <li>Mit <strong>Rohabbild (.bin)</strong> eine Sicherung speichern.</li>
+    <li>Änderungen vornehmen und im geänderten Reiter <strong>In Gateway speichern</strong> klicken.</li>
+  </ol>
+  <p class="hint">Jedes Feld und jede Spalte mit einem <em>i</em>-Symbol erklärt sich beim Überfahren mit der Maus
+    oder per Tastaturfokus.</p>
+</section>
+
+<section id="h-connect">
+  <h2>Gateway anschließen</h2>
+  <p>Einen auf <strong>5 V</strong> eingestellten USB-TTL-Adapter an die RJ10-Programmierbuchse des Gateways
+    anschließen:</p>
+  <div class="wiring" role="img" aria-label="Verdrahtung RJ10 zum USB-TTL-Adapter">
+    <div class="wiring-head">RJ10 am Gateway</div><div></div><div class="wiring-head">USB-TTL-Adapter (5 V)</div>
+    <div class="pin">1 · GND</div><div class="wire">───────</div><div class="pin">GND</div>
+    <div class="pin">2 · +5 V</div><div class="wire off">┄┄ ✕ ┄┄</div><div class="pin off">VCC – nicht verbinden</div>
+    <div class="pin">3 · TxD <small>Gateway sendet</small></div><div class="wire">──────▶</div><div class="pin">RXD</div>
+    <div class="pin">4 · RxD <small>Gateway empfängt</small></div><div class="wire">◀──────</div><div class="pin">TXD</div>
+  </div>
+  <ul>
+    <li>Den TTL-Ausgang verwenden, nie RS232/RS485. Bei Unsicherheit über die Pin-Reihenfolge: Bei versorgtem
+      Gateway sind die beiden Kontakte mit etwa 5 V zueinander GND (1) und +5 V (2).</li>
+    <li>Die Kopfzeile zeigt den Zustand der Verbindung:</li>
+  </ul>
+  <table class="help-table">
+    <thead><tr><th>Abzeichen</th><th>Bedeutung</th></tr></thead>
+    <tbody>
+      <tr><td>nicht geprüft</td><td>noch kein Test – <strong>Verbindung testen</strong> klicken</td></tr>
+      <tr><td>keine Verbindung</td><td>keine Antwort: TX/RX tauschen, Schnittstelle und 5-V-Pegel prüfen</td></tr>
+      <tr><td>TK-Gateway 01.26 · PIC 0101</td><td>verbunden; Firmware und Bustreiber vorhanden</td></tr>
+      <tr><td>Warn- / Fehlerfarbe</td><td>kein Bustreiber installiert oder nur der Bootlader läuft (siehe <a href="#h-firmware">Firmware aktualisieren</a>)</td></tr>
+    </tbody>
+  </table>
+</section>
+
+<section id="h-basics">
+  <h2>So arbeitet das Tool</h2>
+  <pre class="mermaid">
+flowchart LR
+  GW[("Gateway")] -- "Aus Gateway laden" --> WC["Arbeitskopie<br/>(alle Reiter)"]
+  F["Datei<br/>.json .bin .gtk .gtb"] -- "Aus Datei laden" --> WC
+  WC -- "In Gateway speichern" --> GW
+  WC -- "Speichern als … / Export" --> F
+  </pre>
+  <ul>
+    <li><strong>Arbeitskopie:</strong> Alle Reiter bearbeiten eine gemeinsame Arbeitskopie auf dem Server. Ins
+      Gateway gelangt erst etwas mit <strong>In Gateway speichern</strong>. Ein Neuladen der Seite behält die
+      Arbeitskopie; ein Neustart von Server/Container beginnt wieder mit Standardwerten.</li>
+    <li><strong>Teilweises Speichern:</strong> <em>In Gateway speichern</em> im Reiter Konfiguration schreibt nur die
+      Konfiguration, im Reiter Telefonbuch nur das Telefonbuch. Ungespeicherte Änderungen am anderen Teil bleiben
+      in der Arbeitskopie.</li>
+    <li><strong>Immer nur ein Gerätezugriff:</strong> Während Laden, Speichern oder Loggen laufen, sind die Knöpfe,
+      die das Gateway brauchen, gesperrt. Fortschritt und Ergebnis stehen in der Statuszeile unten.</li>
+    <li><strong>Oranger Hinweis:</strong> Im Log, per Mitschnitt oder im Assistenten zugeordnete Ruftasten stehen nur
+      in der Arbeitskopie. Der Hinweis zeigt, wie viele noch nicht gespeichert sind, und bietet
+      <strong>Telefonbuch in Gateway speichern</strong> an (vorher das Loggen beenden).</li>
+  </ul>
+</section>
+
+<section id="h-backup">
+  <h2>Sichern und wiederherstellen</h2>
+  <table class="help-table">
+    <thead><tr><th>Aufgabe</th><th>So geht’s</th></tr></thead>
+    <tbody>
+      <tr><td>Vollständige Sicherung</td><td>Konfiguration → <strong>Aus Gateway laden</strong>, dann <strong>Rohabbild (.bin)</strong> (exakte Kopie) oder <strong>Komplett (.json)</strong> (lesbar)</td></tr>
+      <tr><td>Sicherung zurückspielen</td><td><strong>Aus Datei laden</strong> (.bin oder .json), Reiter prüfen, dann <strong>In Gateway speichern</strong> im Reiter Konfiguration <em>und</em> im Reiter Telefonbuch</td></tr>
+      <tr><td>Dateien der Originalsoftware</td><td>Konfiguration: <strong>Als .gtk speichern</strong> / Aus Datei laden; Telefonbuch: <strong>Als .gtb speichern</strong> / Aus Datei laden</td></tr>
+      <tr><td>Bus-Log</td><td>Reiter Loggen → <strong>Speichern</strong> (Textdatei)</td></tr>
+    </tbody>
+  </table>
+</section>
+
+<section id="h-config">
+  <h2>Einstellungen ändern (Reiter Konfiguration)</h2>
+  <ul>
+    <li><strong>Anschlussart:</strong> <em>Nebenstelle</em>, wenn das Gateway an einer Telefonanlage oder einem ATA
+      hängt, <em>Amtsanschluss</em> für eine Telefonleitung mit Telefon an TLN.</li>
+    <li><strong>Zeiten:</strong> Türgesprächszeit, lokale und externe Rufzeit (1–120 s).</li>
+    <li><strong>PIN:</strong> vier Ziffern für das Programmieren per Telefon – die Werkseinstellung 0000 ändern.</li>
+    <li><strong>Variantenumschaltung:</strong> welche der beiden Rufnummern jedes Eintrags gilt (z. B. Tag/Nacht).</li>
+    <li><strong>Masterumleitung:</strong> eine Rufnummer für alle Türrufe (aus / verzögert / sofort). Ein Hinweis
+      erscheint, wenn sie mit der Anrufbeantworter-Einstellung eines Eintrags kollidiert.</li>
+    <li><strong>Werkseinstellungen</strong> setzt nur die Konfiguration der Arbeitskopie zurück; danach speichern.</li>
+  </ul>
+  <p class="hint">Änderungen werden beim Verlassen eines Feldes in die Arbeitskopie übernommen.</p>
+</section>
+
+<section id="h-phonebook">
+  <h2>Telefonbuch bearbeiten</h2>
+  <ul>
+    <li>Die Tabelle zeigt belegte Einträge; <strong>auch freie Einträge anzeigen</strong> zeigt alle 50.</li>
+    <li><strong>Bearbeiten</strong> öffnet den Eintrag: Name, zwei Rufnummern (Variante 1/2) mit
+      Anrufbeantworter-Option, Türstation 1–9, Tastercode. <strong>Übernehmen</strong> schreibt in die Arbeitskopie.</li>
+    <li>Rufnummern: bis 24 Zeichen, Ziffern, <code>*</code>, <code>#</code>, <code>P</code> (Pause),
+      <code>F</code>/<code>f</code> (Flash).</li>
+    <li><strong>✕</strong> leert einen Eintrag, <strong>Telefonbuch löschen</strong> alle – beides nur in der Arbeitskopie.</li>
+    <li>Danach <strong>In Gateway speichern</strong>.</li>
+  </ul>
+</section>
+
+<section id="h-learn">
+  <h2>Ruftasten anlernen</h2>
+  <p>Jeder Eintrag braucht die Adresse „seiner“ Klingeltaste. Wählen Sie den passenden Weg:</p>
+  <pre class="mermaid">
+flowchart TD
+  S(["Start: eine Klingeltaste<br/>soll angelernt werden"]) --> Q{"Wie ist die Lage?"}
+  Q -- "mehrere oder alle Tasten" --> W["Telefonbuch → Klingeln anlernen …<br/>(Assistent, passiv)"]
+  Q -- "eine Taste für einen Eintrag" --> D["Telefonbuch → Eintrag → Ruftaste …"]
+  Q -- "Türruf steht schon<br/>im Reiter Loggen" --> AS["Reiter Loggen: Zuordnen …<br/>neben dem Türruf"]
+  D --> M{"Welcher Weg?"}
+  M -- "ohne Programmiermodus" --> B["B · per Mitschnitt<br/>Mitschnitt starten, Übernehmen"]
+  M -- "Steuergerät erreichbar" --> A["A · über Steuergerät<br/>Ruftaste abholen"]
+  M -- "per Telefon" --> C["C · per Telefon<br/>Code steht im Dialog"]
+  W --> SV["In Gateway speichern"]
+  B --> SV
+  AS --> SV
+  A --> G[("im Gateway gespeichert")]
+  C --> G
+  SV --> G
+  </pre>
+  <table class="help-table">
+    <thead><tr><th>Weg</th><th>Ablauf</th><th>Gespeichert</th></tr></thead>
+    <tbody>
+      <tr><td>Assistent</td><td>1 Vorbereiten: <strong>Prüfen und laden</strong>, optional Sicherung herunterladen · 2 Klingeln: Tasten nacheinander drücken, jede erscheint als Zeile – Eintrag, Tür, Name, Rufnummer wählen; <em>Verwerfen</em> entfernt eine Zeile · 3 Prüfen · 4 <strong>In Gateway speichern</strong></td><td>in Schritt 4</td></tr>
+      <tr><td>A · Steuergerät</td><td>„Systemprogr.“ 3 s am Steuergerät, Klingeltaste 3 s bis zum Ton drücken, <strong>Ruftaste abholen</strong>, zum Schluss „Systemprogr.“ kurz. Die Taste nicht länger halten – das löscht die Zuordnungen der Türstation.</td><td>vom Gateway</td></tr>
+      <tr><td>B · Mitschnitt</td><td><strong>Mitschnitt starten</strong>, an der Tür klingeln, <strong>Übernehmen</strong></td><td>braucht In Gateway speichern</td></tr>
+      <tr><td>C · per Telefon</td><td>den im Dialog angezeigten Code am Telefon eingeben, innerhalb von 15 s klingeln</td><td>vom Gateway</td></tr>
+      <tr><td>Reiter Loggen</td><td>Loggen starten, klingeln, neben dem Türruf <strong>Zuordnen …</strong> klicken</td><td>braucht In Gateway speichern</td></tr>
+    </tbody>
+  </table>
+  <p class="hint">Die passiven Wege (Assistent, B, Log) brauchen das Gateway am Bus, aber keinen Programmiermodus.
+    Jeder Türruf während des Mitschnitts wird erkannt – es klingelt also wirklich.</p>
+</section>
+
+<section id="h-pbx">
+  <h2>Telefonanlage verbinden und testen</h2>
+  <p><strong>Konfiguration → Mit Telefonanlage verbinden …</strong> richtet das Gateway als Nebenstelle ein:</p>
+  <ol>
+    <li><em>Anschluss</em> – FRITZ!Box oder andere Anlage; Verdrahtung und Einrichtung der Anlage werden erklärt;
+      <strong>Prüfen und laden</strong>.</li>
+    <li><em>Wer klingelt?</em> – alle Telefone gleichzeitig (Sammelruf-Nummer) oder eine eigene Nummer je Klingeltaste.</li>
+    <li><em>Zeiten &amp; PIN</em> – Klingeldauer, Türgesprächszeit, PIN.</li>
+    <li><em>Prüfen</em> – Liste aller Änderungen, <strong>In Gateway speichern</strong>.</li>
+    <li><em>Fertig</em> – <strong>Verbindung jetzt testen …</strong> und Bedienhinweise.</li>
+  </ol>
+  <p><strong>Konfiguration → Telefonanlage testen …</strong> bietet zwei Tests:</p>
+  <ul>
+    <li><strong>Test 1 · Anlage → Gateway</strong> (ohne Bus möglich): starten, das Gateway von einem Telefon der
+      Anlage anrufen, auf den Kommando-Ton warten (12–20 s), den angezeigten Code eingeben, auflegen,
+      <strong>Prüfen</strong> klicken. Die Oberfläche liest das Ergebnis zurück und stellt die Variante wieder
+      zurück. Vor einem erneuten Anruf 60 s warten.</li>
+    <li><strong>Test 2 · Gateway → Anlage</strong> (Bus und angelernte Taste nötig): starten, an der Tür klingeln; die
+      Checkliste zeigt Türruf, bekannte Taste und die gewählte Nummer; danach beantworten, ob die Telefone geklingelt haben.</li>
+  </ul>
+</section>
+
+<section id="h-log">
+  <h2>Bus mitlesen (Reiter Loggen)</h2>
+  <ul>
+    <li><strong>Start</strong> / <strong>Stop</strong> schaltet das Loggen; es belegt währenddessen die Schnittstelle.</li>
+    <li><strong>Testausgabe</strong> lässt das Gateway <code>S: 90 …</code> protokollieren – zeigt, dass das Loggen
+      auch ohne Busverkehr funktioniert.</li>
+    <li><strong>Anzeigen</strong> filtert (nur Türrufe, empfängt, sendet, ruft); <strong>Rohdaten</strong> und
+      <strong>Auto-Scroll</strong> ändern die Ansicht; <strong>Speichern</strong> / <strong>Löschen</strong>.</li>
+    <li>Türrufe zeigen den Telefonbucheintrag der Taste oder <strong>Zuordnen …</strong> bei unbekannten Tasten.</li>
+  </ul>
+  <table class="help-table">
+    <thead><tr><th>Zeile</th><th>Bedeutung</th></tr></thead>
+    <tbody>
+      <tr><td><code>E: 11 …</code></td><td>Türruf (enthält die Tasteradresse)</td></tr>
+      <tr><td><code>E: 21</code> / <code>E: 20</code></td><td>Türruf angenommen / Gesprächsende</td></tr>
+      <tr><td><code>S: 31 …</code></td><td>Gateway öffnet die Tür</td></tr>
+      <tr><td><code>T: DIAL …</code></td><td>Gateway wählt eine Rufnummer</td></tr>
+    </tbody>
+  </table>
+  <p class="hint">Anrufe beim Gateway und Eingaben per Telefon werden nicht protokolliert. „Seit einigen Sekunden keine
+    Daten“ ist normal, solange auf dem Bus nichts passiert.</p>
+</section>
+
+<section id="h-firmware">
+  <h2>Firmware aktualisieren (Reiter Firmware)</h2>
+  <ol>
+    <li><strong>Auslesen</strong> zeigt die Stände von Gateway-Firmware und Bustreiber.</li>
+    <li>Datei wählen: <code>.tsk</code> für das Gateway, <code>.hex</code> für den Bustreiber, dann <strong>Übertragen</strong>.</li>
+    <li>Die Gateway-Firmware startet nach etwa 5 s neu. Der Bustreiber wird zu Beginn seiner Übertragung gelöscht.</li>
+  </ol>
+  <p class="notice"><strong>Nur mit stabiler Verbindung.</strong> Bricht eine Übertragung ab: Verbindung prüfen,
+    Gateway aus- und wieder einschalten und erneut übertragen. <strong>Bootlader-Reset</strong> hilft nur, wenn das
+    Gateway im Bootlader hängt. Firmware-Dateien liegen diesem Tool nicht bei.</p>
+</section>
+
+<section id="h-more">
+  <h2>Telefon-Codes, Lizenzen, Sprache</h2>
+  <ul>
+    <li>Reiter <strong>Telefon-Codes</strong>: alle Codes zum Programmieren und Bedienen per Telefon, auch die
+      undokumentierten (z. B. Tür öffnen: Gateway anrufen, nach dem Kommando-Ton <code>#</code> + Türnummer).</li>
+    <li>Reiter <strong>Lizenzen</strong>: Fremdkomponenten dieser Installation mit Lizenztexten;
+      <strong>SBOM herunterladen</strong> speichert eine CycloneDX-Stückliste.</li>
+    <li><strong>EN | DE</strong> in der Kopfzeile wechselt die Sprache; die Wahl merkt sich dieser Browser.</li>
+    <li>Jeder Reiter hat eine eigene Adresse (z. B. <code>#help</code>), Dialoge schließen mit <kbd>Esc</kbd>.</li>
+  </ul>
+</section>
+
+<section id="h-trouble">
+  <h2>Fehlersuche</h2>
+  <table class="help-table">
+    <thead><tr><th>Symptom</th><th>Abhilfe</th></tr></thead>
+    <tbody>
+      <tr><td>Abzeichen „keine Verbindung“</td><td>TX/RX tauschen; Adapter auf 5 V TTL; richtige Schnittstelle wählen; im Container Gerätedurchreichung und Rechte prüfen</td></tr>
+      <tr><td>„kein Bustreiber“, obwohl es vorher ging</td><td>Verbindung erneut testen – das Tool schaltet ein aus einer früheren Sitzung übrig gebliebenes Loggen ab; sonst Gateway aus- und einschalten</td></tr>
+      <tr><td>Knöpfe sind ausgegraut</td><td>ein Vorgang oder das Loggen läuft – warten oder Loggen beenden</td></tr>
+      <tr><td>„Die serielle Schnittstelle ist belegt“</td><td>Loggen beenden oder den laufenden Vorgang abwarten</td></tr>
+      <tr><td>Änderungen nach Neustart weg</td><td>sie wurden nicht gespeichert – <strong>In Gateway speichern</strong> verwenden</td></tr>
+      <tr><td>oranger Hinweis verschwindet nicht</td><td>zugeordnete Ruftasten sind noch nicht geschrieben – Loggen beenden, <strong>Telefonbuch in Gateway speichern</strong></td></tr>
+      <tr><td>Test 1 findet keine Änderung</td><td>Anschlussart muss <em>Nebenstelle</em> sein; die Anlage muss ≥ 25 s klingeln lassen; 60 s zwischen Anrufen warten</td></tr>
+      <tr><td>Log bleibt leer</td><td>ohne Busverkehr normal – <strong>Testausgabe</strong> prüft es</td></tr>
+    </tbody>
+  </table>
+</section>
+
+<section id="h-docs">
+  <h2>Weitere Dokumentation</h2>
+  <p>Hintergrund, der nicht die Bedienung dieses Tools betrifft – wie TKS und Gateway arbeiten, Türrufe, Tür öffnen
+    per SIP, Kommandomodus, Protokoll und Hardware – steht in der Dokumentation im Projekt-Repository (Englisch):</p>
+  <ul>
+    <li><code>docs/USER_GUIDE.md</code> – Systemübersicht, Abläufe, Tür öffnen per SIP, Telefon-Codes</li>
+    <li><code>docs/UI.md</code> – Referenz aller Reiter, Dialoge und Knöpfe</li>
+    <li><code>docs/PROTOCOL.md</code>, <code>docs/HARDWARE.md</code> – Protokoll-, Firmware- und Hardware-Erkenntnisse</li>
+  </ul>
+</section>
+
+</div>

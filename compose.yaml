@@ -1,0 +1,29 @@
+# Web UI for the Gira TK gateway with a passed-through USB serial adapter.
+#
+#   podman compose up -d --build --force-recreate   (or: docker compose up -d --build)
+#   -> http://127.0.0.1:5000/
+#
+# Device: stable path below /dev/serial/by-id/ (does not change when re-plugging).
+# Other adapter: set SERIAL_DEVICE in .env, see .env.example.
+
+services:
+  tks-gateway:
+    build: .
+    image: localhost/tks-gateway:latest
+    container_name: tks-gateway
+    restart: unless-stopped
+    devices:
+      - "${SERIAL_DEVICE:-/dev/serial/by-id/usb-FTDI_FT232R_USB_UART_BG04PJMA-if00-port0}:/dev/ttyUSB0"
+    environment:
+      TKS_GATEWAY_PORT: /dev/ttyUSB0
+    # Rootless Podman: keep the host's group permissions (dialout).
+    # Docker: set to the numeric GID of the host group dialout (Fedora 18, Debian/Ubuntu 20)
+    # or remove the line if the container runs as root.
+    group_add:
+      - "${SERIAL_GROUP:-keep-groups}"
+    # SELinux (Fedora/RHEL): otherwise the container may not open the passed-through TTY.
+    security_opt:
+      - label=disable
+    ports:
+      # local only – the UI has no login
+      - "${BIND_ADDRESS:-127.0.0.1}:${HTTP_PORT:-5000}:5000"

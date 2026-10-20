@@ -1,0 +1,530 @@
+<!doctype html>
+<html lang="{{ lang }}">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{{ t('title') }}</title>
+  <link rel="icon" href="data:,">
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+<header>
+  <div class="brand">
+    <strong>Gira TK-Gateway 1290 00</strong>
+    <span>{{ t('subtitle') }}</span>
+  </div>
+  <div class="conn">
+    <label for="port">{{ t('port') }}</label>
+    <select id="port"></select>
+    <button id="btn-ports" class="ghost" title="{{ t('ports.refresh') }}" aria-label="{{ t('ports.refresh') }}">↻</button>
+    <button data-action="version" class="dev">{{ t('conn.test') }}</button>
+    <span id="gw-badge" class="badge"></span>
+    <div class="lang-switch" role="group" aria-label="{{ t('lang.switch') }}">
+      {% for l in langs %}<button type="button" data-lang="{{ l }}" aria-pressed="{{ 'true' if l == lang else 'false' }}">{{ l|upper }}</button>{% endfor %}
+    </div>
+  </div>
+</header>
+
+<nav class="tabs" role="tablist">
+  <button role="tab" data-tab="konfiguration" aria-selected="true">{{ t('tab.config') }}</button>
+  <button role="tab" data-tab="telefonbuch">{{ t('tab.phonebook') }}</button>
+  <button role="tab" data-tab="loggen">{{ t('tab.log') }}</button>
+  <button role="tab" data-tab="firmware">{{ t('tab.firmware') }}</button>
+  <button role="tab" data-tab="codes">{{ t('tab.codes') }}</button>
+  <button role="tab" data-tab="help">{{ t('tab.help') }}</button>
+  <button role="tab" data-tab="licenses">{{ t('tab.licenses') }}</button>
+</nav>
+
+<main>
+  <!-- ======================================================= configuration -->
+  <section id="tab-konfiguration" class="tab active">
+    <p id="src-hint" class="hint"></p>
+    <form id="cfg-form" class="grid">
+      <fieldset>
+        <legend>{{ t('cfg.connection') }}</legend>
+        <label><input type="radio" name="anschlussart" value="amt"> {{ t('cfg.amt') }}</label>
+        <p class="help">{{ t('cfg.amt.help') }}</p>
+        <label><input type="radio" name="anschlussart" value="nebenstelle"> {{ t('cfg.neben') }}</label>
+        <p class="help">{{ t('cfg.neben.help') }}</p>
+      </fieldset>
+
+      <fieldset>
+        <legend>{{ t('cfg.times') }}</legend>
+        <label>{{ t('cfg.talk') }} <input name="tuergespraechszeit" inputmode="numeric" maxlength="3" pattern="\d{1,3}" required></label>
+        <p class="help">{{ t('cfg.talk.help') }}</p>
+        <label>{{ t('cfg.local') }} <input name="lokale_rufzeit" inputmode="numeric" maxlength="3" pattern="\d{1,3}" required></label>
+        <p class="help">{{ t('cfg.local.help') }}</p>
+        <label>{{ t('cfg.external') }} <input name="externe_rufzeit" inputmode="numeric" maxlength="3" pattern="\d{1,3}" required></label>
+        <p class="help">{{ t('cfg.external.help') }}</p>
+        <label>{{ t('cfg.pin') }} <input name="pin" inputmode="numeric" maxlength="4" pattern="\d{4}" required></label>
+        <p class="help">{{ t('cfg.pin.help') }}</p>
+      </fieldset>
+
+      <fieldset>
+        <legend>{{ t('cfg.variant') }}</legend>
+        <label><input type="radio" name="variante" value="1"> {{ t('cfg.v1') }}</label>
+        <label><input type="radio" name="variante" value="2"> {{ t('cfg.v2') }}</label>
+        <p class="help" data-for="legend">{{ t('cfg.variant.help') }}</p>
+      </fieldset>
+
+      <fieldset>
+        <legend>{{ t('cfg.listen') }}</legend>
+        <label><input type="radio" name="mithoeren" value="true"> {{ t('cfg.on') }}</label>
+        <label><input type="radio" name="mithoeren" value="false"> {{ t('cfg.off') }}</label>
+        <p class="help" data-for="legend">{{ t('cfg.listen.help') }}</p>
+      </fieldset>
+
+      <fieldset class="wide">
+        <legend>{{ t('cfg.master') }}</legend>
+        <label>{{ t('cfg.master.number') }} <input name="masterumleitungsnummer" inputmode="tel" maxlength="24" pattern="[0-9*#PFf]{0,24}"></label>
+        <p class="help">{{ t('cfg.master.number.help') }}</p>
+        <div class="row">
+          <label><input type="radio" name="masterumleitung" value="aus"> {{ t('cfg.master.off') }}</label>
+          <label><input type="radio" name="masterumleitung" value="verzoegert"> {{ t('cfg.master.delayed') }}</label>
+          <label><input type="radio" name="masterumleitung" value="sofort"> {{ t('cfg.master.immediate') }}</label>
+          <label><input type="checkbox" name="master_anrufbeantworter"> {{ t('cfg.master.ab') }}</label>
+        </div>
+        <p class="help">{{ t('cfg.master.help') }}</p>
+        <p id="cfg-warn" class="warn" hidden></p>
+      </fieldset>
+    </form>
+
+    <div class="actions">
+      <button data-action="read" class="primary dev">{{ t('btn.load') }}</button>
+      <button data-action="write-config" class="primary dev">{{ t('btn.save') }}</button>
+      <button data-action="tk-wizard" class="dev">{{ t('btn.tk_wizard') }}</button>
+      <button data-action="tk-test" class="dev">{{ t('btn.tk_test') }}</button>
+      <button data-action="defaults">{{ t('btn.defaults') }}</button>
+      <span class="sep"></span>
+      <button data-action="import">{{ t('btn.import') }}</button>
+      <button data-action="export-gtk">{{ t('btn.export_gtk') }}</button>
+      <button data-action="export-json">{{ t('btn.export_json') }}</button>
+      <button data-action="export-bin">{{ t('btn.export_bin') }}</button>
+    </div>
+  </section>
+
+  <!-- ======================================================== phonebook -->
+  <section id="tab-telefonbuch" class="tab">
+    <div class="table-wrap">
+      <table id="pb">
+        <thead>
+          <tr><th>#</th><th>{{ t('subscriber') }}</th><th>{{ t('number_v1') }}</th>
+              <th data-help="{{ t('pb.ab.help') }}">{{ t('ab') }}</th>
+              <th>{{ t('number_v2') }}</th>
+              <th data-help="{{ t('pb.ab2.help') }}">{{ t('ab') }}</th>
+              <th data-help="{{ t('pb.door.help') }}">{{ t('door') }}</th>
+              <th data-help="{{ t('pb.button.help') }}">{{ t('call_button') }}</th>
+              <th></th></tr>
+        </thead>
+        <tbody></tbody>
+      </table>
+    </div>
+    <label class="inline"><input type="checkbox" id="pb-all"> {{ t('pb.show_all') }}</label>
+    <div class="notice" data-unsaved data-only-unsaved hidden>
+      <p class="unsaved-line"><strong class="unsaved-count"></strong> {{ t('save_note.pb') }}</p>
+    </div>
+    <div class="actions">
+      <button data-action="read" class="primary dev">{{ t('btn.load') }}</button>
+      <button data-action="write-phonebook" class="primary dev">{{ t('btn.save') }}</button>
+      <button data-action="wizard" class="dev">{{ t('btn.learn_wizard') }}</button>
+      <button data-action="pb-clear" class="danger">{{ t('btn.pb_clear') }}</button>
+      <span class="sep"></span>
+      <button data-action="import">{{ t('btn.import') }}</button>
+      <button data-action="export-gtb">{{ t('btn.export_gtb') }}</button>
+    </div>
+  </section>
+
+  <!-- ============================================================= log -->
+  <section id="tab-loggen" class="tab">
+    <div class="actions">
+      <button id="btn-log" class="primary">Start</button>
+      <button id="btn-log-ping" disabled title="{{ t('log.ping.title') }}">{{ t('log.ping') }}</button>
+      <label class="inline">{{ t('log.show') }}
+        <select id="log-filter">
+          <option value="alle">{{ t('log.f.all') }}</option>
+          <option value="tuerruf">{{ t('log.f.calls') }}</option>
+          <option value="E">{{ t('log.f.E') }}</option>
+          <option value="S">{{ t('log.f.S') }}</option>
+          <option value="T">{{ t('log.f.T') }}</option>
+        </select>
+      </label>
+      <label class="inline"><input type="checkbox" id="log-raw" checked> {{ t('log.raw') }}</label>
+      <label class="inline"><input type="checkbox" id="log-scroll" checked> {{ t('log.scroll') }}</label>
+      <span class="sep"></span>
+      <button data-action="log-download">{{ t('log.save') }}</button>
+      <button data-action="log-clear">{{ t('log.clear') }}</button>
+    </div>
+    <div class="notice" data-unsaved>
+      <p>{{ t('save_note') }}</p>
+      <p class="unsaved-line" hidden><strong class="unsaved-count"></strong>
+        <button data-action="write-phonebook" class="primary dev">{{ t('save_note.btn') }}</button></p>
+    </div>
+    <div class="log-wrap" id="log-wrap">
+      <table id="log" class="log-table">
+        <thead><tr><th>{{ t('log.time') }}</th><th></th><th class="raw">{{ t('log.raw') }}</th><th>{{ t('log.text') }}</th><th>{{ t('tab.phonebook') }}</th></tr></thead>
+        <tbody></tbody>
+      </table>
+    </div>
+    <p id="log-idle" class="warn" hidden>{{ t('log.idle') }}</p>
+    <p class="hint">{{ t('log.scope') }}</p>
+    <p class="hint">{{ t('log.calls') }}</p>
+  </section>
+
+  <!-- =========================================================== firmware -->
+  <section id="tab-firmware" class="tab">
+    <div class="grid">
+      <fieldset>
+        <legend>{{ t('fw.version') }}</legend>
+        <dl class="kv">
+          <dt>{{ t('fw.gateway') }}</dt><dd id="fw-koppler">–</dd>
+          <dt>{{ t('fw.pic') }}</dt><dd id="fw-pic">–</dd>
+        </dl>
+        <p id="fw-state" class="hint">{{ t('fw.not_read') }}</p>
+        <div class="row">
+          <button data-action="version" class="dev">{{ t('fw.read') }}</button>
+          <button data-action="bootloader-reset" class="dev" title="{{ t('fw.bl_reset.title') }}">{{ t('fw.bl_reset') }}</button>
+        </div>
+      </fieldset>
+      <fieldset>
+        <legend>{{ t('fw.file') }}</legend>
+        <input type="file" id="fw-file" accept=".tsk">
+        <button data-action="fw-upload" class="primary dev">{{ t('fw.transfer') }}</button>
+        <p class="hint">{{ t('fw.file.hint') }}</p>
+      </fieldset>
+      <fieldset>
+        <legend>{{ t('fw.bt_file') }}</legend>
+        <input type="file" id="bt-file" accept=".hex">
+        <button data-action="bt-upload" class="primary dev">{{ t('fw.transfer') }}</button>
+        <p class="hint">{{ t('fw.bt_file.hint') }}</p>
+      </fieldset>
+    </div>
+    <p class="hint">{{ t('fw.abort.hint') }}</p>
+  </section>
+
+  <!-- ====================================================== phone codes -->
+  <section id="tab-codes" class="tab">
+    <p class="hint">{{ t('codes.intro') }} <span class="tag undoc">{{ t('undoc') }}</span> {{ t('codes.undoc_note') }}</p>
+    <div class="table-wrap">
+      <table id="codes">
+        <thead><tr><th>{{ t('codes.action') }}</th><th>{{ t('codes.code') }}</th><th>{{ t('codes.note') }}</th></tr></thead>
+        <tbody></tbody>
+      </table>
+    </div>
+  </section>
+
+  <!-- ============================================================= help -->
+  <section id="tab-help" class="tab help" data-mermaid="{{ url_for('static', filename='vendor/mermaid.min.js') }}">
+    {% include 'help_' ~ lang ~ '.html' %}
+  </section>
+
+  <!-- ========================================================= licenses -->
+  <section id="tab-licenses" class="tab">
+    <p class="hint">{{ t('lic.intro') }}</p>
+    <div class="actions">
+      <a class="button primary" href="{{ url_for('sbom_download') }}" download title="{{ t('lic.sbom.title') }}">{{ t('lic.sbom') }}</a>
+    </div>
+    <div class="table-wrap">
+      <table id="lic">
+        <thead><tr><th>{{ t('lic.component') }}</th><th>{{ t('lic.version') }}</th><th>{{ t('lic.license') }}</th><th>{{ t('lic.type') }}</th><th>{{ t('lic.source') }}</th></tr></thead>
+        <tbody></tbody>
+      </table>
+    </div>
+    <div id="lic-texts"></div>
+    <p class="hint">{{ t('lic.disclaimer') }}</p>
+  </section>
+</main>
+
+<footer>
+  <div class="progress"><div id="bar"></div></div>
+  <span id="status" role="status">{{ t('ready') }}</span>
+</footer>
+
+<!-- edit entry -->
+<dialog id="entry-dlg">
+  <form method="dialog" id="entry-form">
+    <h2>{{ t('entry.title') }} <span id="entry-idx"></span></h2>
+    <label>{{ t('name') }} <input name="bezeichnung" maxlength="20"></label>
+    <p class="help">{{ t('entry.name.help') }}</p>
+    <label>{{ t('entry.v1') }} <input name="nummer_v1" inputmode="tel" maxlength="24" pattern="[0-9*#PFf]{0,24}"></label>
+    <p class="help">{{ t('entry.v1.help') }}</p>
+    <label class="inline"><input type="checkbox" name="ab_v1"> {{ t('entry.ab1') }}</label>
+    <p class="help">{{ t('entry.ab.help') }}</p>
+    <label>{{ t('entry.v2') }} <input name="nummer_v2" inputmode="tel" maxlength="24" pattern="[0-9*#PFf]{0,24}"></label>
+    <p class="help">{{ t('entry.v2.help') }}</p>
+    <label class="inline"><input type="checkbox" name="ab_v2"> {{ t('entry.ab2') }}</label>
+    <p class="help">{{ t('entry.ab2.help') }}</p>
+    <label>{{ t('door_station') }} <select name="tuerstation" class="ts-select"></select></label>
+    <p class="help">{{ t('entry.door.help') }}</p>
+    <label>{{ t('entry.code') }} <input name="tastercode" class="mono" pattern="([0-9A-Fa-f]{2}-){7}[0-9A-Fa-f]{2}"></label>
+    <p class="help">{{ t('entry.code.help') }}</p>
+    <div class="actions">
+      <button value="cancel" formnovalidate>{{ t('btn.cancel') }}</button>
+      <button value="ok" class="primary">{{ t('btn.apply') }}</button>
+    </div>
+  </form>
+</dialog>
+
+<!-- assign call button -->
+<dialog id="rt-dlg">
+  <h2>{{ t('rt.title') }} <span id="rt-idx"></span></h2>
+  <label>{{ t('door_station') }} <select id="rt-ts" class="ts-select" required></select></label>
+
+  <div class="method">
+    <h3>{{ t('rt.a') }} <span class="tag">{{ t('rt.a.tag') }}</span></h3>
+    <ol>
+      <li>{{ t('rt.a.1') }}</li>
+      <li>{{ t('rt.a.2') }}</li>
+      <li>{{ t('rt.a.3') }}</li>
+      <li>{{ t('rt.a.4') }}</li>
+    </ol>
+    <p class="warn">{{ t('rt.a.warn') }}</p>
+    <button id="rt-fetch" class="primary dev">{{ t('rt.fetch') }}</button>
+  </div>
+
+  <div class="method">
+    <h3>{{ t('rt.b') }} <span class="tag">{{ t('rt.b.tag') }}</span></h3>
+    <p>{{ t('rt.b.text') }}</p>
+    <div class="row">
+      <button id="rt-cap" class="primary">{{ t('rt.cap') }}</button>
+      <span id="rt-cap-state" class="mono"></span>
+    </div>
+    <button id="rt-cap-take" class="primary" hidden>{{ t('btn.apply') }}</button>
+    <p class="notice">{{ t('save_note') }}</p>
+    <p class="hint">{{ t('rt.multi') }} <button type="button" class="link" data-action="wizard-from-rt">{{ t('rt.multi.link') }}</button></p>
+  </div>
+
+  <div class="method">
+    <h3>{{ t('rt.c') }} <span class="tag undoc">{{ t('undoc') }}</span></h3>
+    <p>{{ t('rt.c.text') }}</p>
+    <p class="code mono" id="rt-dtmf"></p>
+  </div>
+
+  <div class="actions">
+    <button id="rt-close">{{ t('btn.close') }}</button>
+  </div>
+</dialog>
+
+<!-- assign door call from the log -->
+<dialog id="as-dlg">
+  <form method="dialog" id="as-form">
+    <h2>{{ t('as.title') }}</h2>
+    <p>{{ t('call_button') }} <span id="as-code" class="mono"></span></p>
+    <label>{{ t('as.entry') }} <select name="index" id="as-index"></select></label>
+    <p class="notice">{{ t('save_note') }}</p>
+    <label>{{ t('door_station') }} <select name="tuerstation" class="ts-select" required></select></label>
+    <div class="actions">
+      <button value="cancel" formnovalidate>{{ t('btn.cancel') }}</button>
+      <button value="ok" class="primary">{{ t('btn.apply') }}</button>
+    </div>
+  </form>
+</dialog>
+
+<!-- PBX connection test -->
+<dialog id="tt" class="wizard" aria-labelledby="tt-title">
+  <div class="wiz-head">
+    <h2 id="tt-title">{{ t('tt.title') }}</h2>
+  </div>
+
+  <section class="wiz-step test">
+    <h3>{{ t('tt1.title') }} <span class="tag">{{ t('tt1.tag') }}</span></h3>
+    <p>{{ t('tt1.text') }}</p>
+    <div id="tt1-start-box">
+      <p class="hint">{{ t('tt1.hint') }}</p>
+      <button id="tt1-start" class="primary">{{ t('tt1.start') }}</button>
+    </div>
+    <div id="tt1-run" hidden>
+      <ol class="howto">
+        <li>{{ t('tt1.s1')|replace('{own}', '<span id="tt1-own"></span>'|safe) }}</li>
+        <li>{{ t('tt1.s2')|replace('{code}', '<code class="code" id="tt1-code"></code>'|safe) }}</li>
+        <li>{{ t('tt1.s3') }}</li>
+      </ol>
+      <div class="row">
+        <button id="tt1-check" class="primary">{{ t('tt1.check') }}</button>
+        <button id="tt1-cancel">{{ t('btn.cancel') }}</button>
+      </div>
+    </div>
+    <div id="tt1-result" class="result" hidden></div>
+  </section>
+
+  <section class="wiz-step test">
+    <h3>{{ t('tt2.title') }} <span class="tag">{{ t('tt2.tag') }}</span></h3>
+    <p>{{ t('tt2.text') }}</p>
+    <div class="row">
+      <button id="tt2-start" class="primary">{{ t('tt2.start') }}</button>
+      <button id="tt2-stop" hidden>{{ t('btn.cancel') }}</button>
+    </div>
+    <ul id="tt2-steps" class="checklist" hidden>
+      <li id="tt2-c-ring"></li>
+      <li id="tt2-c-known"></li>
+      <li id="tt2-c-dial"></li>
+    </ul>
+    <div id="tt2-ask" hidden>
+      <p><strong>{{ t('tt2.ask') }}</strong></p>
+      <div class="row">
+        <button id="tt2-yes" class="primary">{{ t('yes') }}</button>
+        <button id="tt2-no">{{ t('no') }}</button>
+      </div>
+    </div>
+    <div id="tt2-result" class="result" hidden></div>
+  </section>
+
+  <div class="actions">
+    <span class="sep"></span>
+    <span id="tt-msg" class="hint" role="status"></span>
+    <button id="tt-close">{{ t('btn.close') }}</button>
+  </div>
+</dialog>
+
+<!-- wizard: connect to PBX -->
+<dialog id="tk" class="wizard" aria-labelledby="tk-title">
+  <div class="wiz-head">
+    <h2 id="tk-title">{{ t('tk.title') }}</h2>
+    <ol class="steps">
+      <li data-step="1">{{ t('tk.st1') }}</li>
+      <li data-step="2">{{ t('tk.st2') }}</li>
+      <li data-step="3">{{ t('tk.st3') }}</li>
+      <li data-step="4">{{ t('tk.st4') }}</li>
+      <li data-step="5">{{ t('tk.st5') }}</li>
+    </ol>
+  </div>
+
+  <section class="wiz-step" data-step="1">
+    <div class="row">
+      <label><input type="radio" name="tk-type" value="fritz" checked> FRITZ!Box</label>
+      <label><input type="radio" name="tk-type" value="andere"> {{ t('tk.other') }}</label>
+    </div>
+    <ol class="howto">
+      <li>{{ t('tk.wire') }}</li>
+      <li>{{ t('tk.setup') }}</li>
+      <li>{{ t('tk.own') }}
+        <input id="tk-own" inputmode="tel" maxlength="12" size="8" placeholder="{{ t('tk.own.placeholder') }}">
+        <span class="fritz hint">FON 1 = <code>**1</code>, FON 2 = <code>**2</code></span></li>
+    </ol>
+    <label class="inline"><input type="checkbox" id="tk-wired"> {{ t('tk.wired') }}</label>
+    <ul class="checklist">
+      <li id="tk-c-conn">{{ t('chk.conn') }}</li>
+      <li id="tk-c-read">{{ t('chk.read') }}</li>
+    </ul>
+    <button id="tk-prepare" class="primary">{{ t('btn.check_load') }}</button>
+  </section>
+
+  <section class="wiz-step" data-step="2">
+    <p>{{ t('tk.who') }}</p>
+    <label class="choice"><input type="radio" name="tk-mode" value="alle" checked>
+      <span>{{ t('tk.all') }}</span></label>
+    <div class="indent" data-mode="alle">
+      <label>{{ t('tk.group') }} <input id="tk-group" inputmode="tel" maxlength="24" pattern="[0-9*#PFf]{1,24}"></label>
+      <p class="help fritz">{{ t('tk.group.fritz') }}</p>
+      <p class="help andere">{{ t('tk.group.other') }}</p>
+    </div>
+    <label class="choice"><input type="radio" name="tk-mode" value="einzeln">
+      <span>{{ t('tk.single') }}</span></label>
+    <div class="indent" data-mode="einzeln">
+      <div class="table-wrap"><table id="tk-entries">
+        <thead><tr><th>#</th><th>{{ t('tk.bell') }}</th><th>{{ t('door') }}</th><th>{{ t('tk.number') }}</th></tr></thead><tbody></tbody>
+      </table></div>
+    </div>
+    <p id="tk-learned" class="help"></p>
+  </section>
+
+  <section class="wiz-step" data-step="3">
+    <label>{{ t('tk.ring') }}
+      <input id="tk-ring" inputmode="numeric" maxlength="3" pattern="\d{1,3}" required></label>
+    <p class="help">{{ t('tk.ring.help') }}</p>
+    <label>{{ t('cfg.talk') }} <input id="tk-talk" inputmode="numeric" maxlength="3" pattern="\d{1,3}" required></label>
+    <p class="help">{{ t('tk.talk.help') }}</p>
+    <label>{{ t('cfg.pin') }} <input id="tk-pin" inputmode="numeric" maxlength="4" pattern="\d{4}" required></label>
+    <p id="tk-pin-warn" class="warn" hidden>{{ t('tk.pin.warn') }}</p>
+  </section>
+
+  <section class="wiz-step" data-step="4">
+    <p>{{ t('tk.changes') }}</p>
+    <ul id="tk-summary" class="summary"></ul>
+    <p id="tk-warn" class="warn" hidden></p>
+  </section>
+
+  <section class="wiz-step" data-step="5">
+    <p id="tk-result"></p>
+    <p><button data-action="tk-test-from-wizard" class="primary">{{ t('tk.test_now') }}</button></p>
+    <ol class="howto" id="tk-test">
+      <li>{{ t('tk.t1') }}</li>
+      <li>{{ t('tk.t2') }}</li>
+      <li>{{ t('tk.t3') }}</li>
+      <li>{{ t('tk.t4') }}</li>
+      <li id="tk-test-own">{{ t('tk.t5') }}</li>
+    </ol>
+  </section>
+
+  <div class="actions">
+    <button id="tk-cancel">{{ t('btn.cancel') }}</button>
+    <span class="sep"></span>
+    <span id="tk-msg" class="hint" role="status"></span>
+    <button id="tk-back">{{ t('btn.back') }}</button>
+    <button id="tk-next" class="primary">{{ t('btn.next') }}</button>
+  </div>
+</dialog>
+
+<!-- wizard: learn call buttons passively -->
+<dialog id="wiz" class="wizard" aria-labelledby="wiz-title">
+  <div class="wiz-head">
+    <h2 id="wiz-title">{{ t('wz.title') }} <span class="tag on">{{ t('wz.passive') }}</span></h2>
+    <ol class="steps">
+      <li data-step="1">{{ t('wz.st1') }}</li>
+      <li data-step="2">{{ t('wz.st2') }}</li>
+      <li data-step="3">{{ t('wz.st3') }}</li>
+      <li data-step="4">{{ t('wz.st4') }}</li>
+    </ol>
+  </div>
+
+  <section class="wiz-step" data-step="1">
+    <p>{{ t('wz.intro') }}</p>
+    <ul class="checklist">
+      <li id="wz-c-conn">{{ t('chk.conn') }}</li>
+      <li id="wz-c-read">{{ t('chk.read') }}</li>
+    </ul>
+    <div class="row">
+      <button id="wz-prepare" class="primary">{{ t('btn.check_load') }}</button>
+      <button id="wz-backup" disabled>{{ t('wz.backup') }}</button>
+    </div>
+    <p class="hint">{{ t('wz.req') }}</p>
+  </section>
+
+  <section class="wiz-step" data-step="2">
+    <p class="live"><span class="pulse" aria-hidden="true"></span><span>{{ t('wz.live') }}</span></p>
+    <div class="table-wrap">
+      <table id="wz-found">
+        <thead><tr><th>{{ t('call_button') }}</th><th>{{ t('wz.detected') }}</th><th>{{ t('wz.entry') }}</th><th>{{ t('door') }}</th><th>{{ t('name') }}</th><th>{{ t('number_v1') }}</th><th></th></tr></thead>
+        <tbody></tbody>
+      </table>
+    </div>
+    <p id="wz-empty" class="hint">{{ t('wz.empty') }}</p>
+    <p class="notice">{{ t('wz.save_note') }}</p>
+    <p class="hint">{{ t('wz.tip') }}</p>
+  </section>
+
+  <section class="wiz-step" data-step="3">
+    <p>{{ t('wz.summary') }}</p>
+    <ul id="wz-summary" class="summary"></ul>
+    <p id="wz-warn" class="warn" hidden></p>
+    <p class="hint">{{ t('wz.later') }}</p>
+  </section>
+
+  <section class="wiz-step" data-step="4">
+    <p id="wz-result"></p>
+    <p class="hint">{{ t('wz.test') }}</p>
+  </section>
+
+  <div class="actions">
+    <button id="wz-cancel">{{ t('btn.cancel') }}</button>
+    <span class="sep"></span>
+    <span id="wz-msg" class="hint" role="status"></span>
+    <button id="wz-back">{{ t('btn.back') }}</button>
+    <button id="wz-next" class="primary">{{ t('btn.next') }}</button>
+  </div>
+</dialog>
+
+<input type="file" id="import-file" accept=".json,.bin,.gtk,.gtb" hidden>
+<script>window.I18N = {{ js_i18n|tojson }};</script>
+<script src="{{ url_for('static', filename='app.js') }}"></script>
+</body>
+</html>

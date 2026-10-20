@@ -1,0 +1,261 @@
+<nav class="help-toc" aria-label="Contents">
+  <strong>Contents</strong>
+  <a href="#h-start">Quick start</a>
+  <a href="#h-connect">Connect the gateway</a>
+  <a href="#h-basics">How the tool works</a>
+  <a href="#h-backup">Back up and restore</a>
+  <a href="#h-config">Change settings</a>
+  <a href="#h-phonebook">Edit the phonebook</a>
+  <a href="#h-learn">Learn call buttons</a>
+  <a href="#h-pbx">Connect and test a PBX</a>
+  <a href="#h-log">Watch the bus (Log)</a>
+  <a href="#h-firmware">Update firmware</a>
+  <a href="#h-more">Phone codes, licenses, language</a>
+  <a href="#h-trouble">Troubleshooting</a>
+  <a href="#h-docs">Further documentation</a>
+</nav>
+
+<div class="help-body">
+
+<section id="h-start">
+  <h2>Quick start</h2>
+  <pre class="mermaid">
+flowchart LR
+  A["Choose serial port<br/>(header)"] --> B["Test connection"]
+  B --> C["Load from gateway"]
+  C --> D["Backup:<br/>Raw image (.bin)"]
+  D --> E["Edit configuration<br/>and phonebook"]
+  E --> F["Save to gateway"]
+  </pre>
+  <ol>
+    <li>Select the serial port of the USB-TTL adapter at the top (<strong>↻</strong> searches again).</li>
+    <li>Click <strong>Test connection</strong> – the badge shows the firmware versions.</li>
+    <li>In the <em>Configuration</em> tab click <strong>Load from gateway</strong>. Until then the UI only shows
+      default values.</li>
+    <li>Save a backup with <strong>Raw image (.bin)</strong>.</li>
+    <li>Make your changes, then click <strong>Save to gateway</strong> in the tab you changed.</li>
+  </ol>
+  <p class="hint">Every field and column with an <em>i</em> symbol explains itself on hover or keyboard focus.</p>
+</section>
+
+<section id="h-connect">
+  <h2>Connect the gateway</h2>
+  <p>Connect a USB-TTL adapter set to <strong>5 V</strong> to the RJ10 programming socket of the gateway:</p>
+  <div class="wiring" role="img" aria-label="Wiring RJ10 to USB-TTL adapter">
+    <div class="wiring-head">RJ10 on the gateway</div><div></div><div class="wiring-head">USB-TTL adapter (5 V)</div>
+    <div class="pin">1 · GND</div><div class="wire">───────</div><div class="pin">GND</div>
+    <div class="pin">2 · +5 V</div><div class="wire off">┄┄ ✕ ┄┄</div><div class="pin off">VCC – do not connect</div>
+    <div class="pin">3 · TxD <small>gateway sends</small></div><div class="wire">──────▶</div><div class="pin">RXD</div>
+    <div class="pin">4 · RxD <small>gateway receives</small></div><div class="wire">◀──────</div><div class="pin">TXD</div>
+  </div>
+  <ul>
+    <li>Use the TTL output, never RS232/RS485. If you are unsure about the pin order: with the gateway powered, the
+      two contacts with about 5 V between them are GND (1) and +5 V (2).</li>
+    <li>The header shows the state of the connection:</li>
+  </ul>
+  <table class="help-table">
+    <thead><tr><th>Badge</th><th>Meaning</th></tr></thead>
+    <tbody>
+      <tr><td>not checked</td><td>no test yet – click <strong>Test connection</strong></td></tr>
+      <tr><td>no connection</td><td>no answer: swap TX/RX, check the port and the 5 V level</td></tr>
+      <tr><td>TK-Gateway 01.26 · PIC 0101</td><td>connected; firmware and bus driver present</td></tr>
+      <tr><td>warning / error colour</td><td>no bus driver installed, or only the bootloader runs (see <a href="#h-firmware">Update firmware</a>)</td></tr>
+    </tbody>
+  </table>
+</section>
+
+<section id="h-basics">
+  <h2>How the tool works</h2>
+  <pre class="mermaid">
+flowchart LR
+  GW[("Gateway")] -- "Load from gateway" --> WC["Working copy<br/>(all tabs)"]
+  F["File<br/>.json .bin .gtk .gtb"] -- "Load from file" --> WC
+  WC -- "Save to gateway" --> GW
+  WC -- "Save as … / Export" --> F
+  </pre>
+  <ul>
+    <li><strong>Working copy:</strong> all tabs edit one working copy on the server. Nothing reaches the gateway
+      until you click <strong>Save to gateway</strong>. Reloading the page keeps the working copy; restarting the
+      server/container starts with default values again.</li>
+    <li><strong>Partial save:</strong> <em>Save to gateway</em> in the Configuration tab writes only the
+      configuration, in the Phonebook tab only the phonebook. Unsaved changes of the other part stay in the
+      working copy.</li>
+    <li><strong>One device access at a time:</strong> while loading, saving or logging runs, the buttons that need
+      the gateway are disabled. Progress and results appear in the status bar at the bottom.</li>
+    <li><strong>Orange notice:</strong> call buttons assigned in the Log tab, by capture or in the wizard are only in
+      the working copy. The notice says how many are not yet saved and offers <strong>Save phonebook to
+      gateway</strong> (stop logging first).</li>
+  </ul>
+</section>
+
+<section id="h-backup">
+  <h2>Back up and restore</h2>
+  <table class="help-table">
+    <thead><tr><th>Task</th><th>How</th></tr></thead>
+    <tbody>
+      <tr><td>Complete backup</td><td>Configuration → <strong>Load from gateway</strong>, then <strong>Raw image (.bin)</strong> (exact copy) or <strong>Complete (.json)</strong> (readable)</td></tr>
+      <tr><td>Restore a backup</td><td><strong>Load from file</strong> (.bin or .json), check the tabs, then <strong>Save to gateway</strong> in the Configuration <em>and</em> the Phonebook tab</td></tr>
+      <tr><td>Files of the original software</td><td>configuration: <strong>Save as .gtk</strong> / Load from file; phonebook: <strong>Save as .gtb</strong> / Load from file</td></tr>
+      <tr><td>Bus log</td><td>Log tab → <strong>Save</strong> (text file)</td></tr>
+    </tbody>
+  </table>
+</section>
+
+<section id="h-config">
+  <h2>Change settings (Configuration tab)</h2>
+  <ul>
+    <li><strong>Connection type:</strong> <em>PBX extension</em> when the gateway is connected to a PBX or ATA,
+      <em>Direct line</em> for a telephone line with a phone on TLN.</li>
+    <li><strong>Times:</strong> door talk time, local and external ring time (1–120 s).</li>
+    <li><strong>PIN:</strong> four digits for programming by phone – change the factory value 0000.</li>
+    <li><strong>Variant switching:</strong> which of the two numbers of each phonebook entry is used (e.g. day/night).</li>
+    <li><strong>Master redirect:</strong> one number for all door calls (off / delayed / immediate). A warning
+      appears if it conflicts with the answering machine setting of an entry.</li>
+    <li><strong>Factory settings</strong> resets only the configuration in the working copy; save afterwards.</li>
+  </ul>
+  <p class="hint">Changes are taken into the working copy when you leave a field.</p>
+</section>
+
+<section id="h-phonebook">
+  <h2>Edit the phonebook</h2>
+  <ul>
+    <li>The table shows used entries; <strong>also show free entries</strong> shows all 50.</li>
+    <li><strong>Edit</strong> opens the entry: name, two numbers (variant 1/2) with answering machine option, door
+      station 1–9, button code. <strong>Apply</strong> takes it into the working copy.</li>
+    <li>Numbers: up to 24 characters, digits, <code>*</code>, <code>#</code>, <code>P</code> (pause),
+      <code>F</code>/<code>f</code> (flash).</li>
+    <li><strong>✕</strong> clears an entry, <strong>Clear phonebook</strong> clears all – both only in the working copy.</li>
+    <li>Then <strong>Save to gateway</strong>.</li>
+  </ul>
+</section>
+
+<section id="h-learn">
+  <h2>Learn call buttons</h2>
+  <p>Each entry needs the address of "its" call button. Choose the way that fits:</p>
+  <pre class="mermaid">
+flowchart TD
+  S(["Start: a call button<br/>is to be learned"]) --> Q{"What is the situation?"}
+  Q -- "several or all buttons" --> W["Phonebook → Learn call buttons …<br/>(wizard, passive)"]
+  Q -- "one button for one entry" --> D["Phonebook → entry → Call button …"]
+  Q -- "door call already visible<br/>in the Log tab" --> AS["Log tab: Assign …<br/>next to the door call"]
+  D --> M{"Which way?"}
+  M -- "no programming mode" --> B["B · by capture<br/>Start capture, Apply"]
+  M -- "control unit at hand" --> A["A · via control unit<br/>Fetch call button"]
+  M -- "by phone" --> C["C · by phone<br/>code shown in the dialog"]
+  W --> SV["Save to gateway"]
+  B --> SV
+  AS --> SV
+  A --> G[("stored in the gateway")]
+  C --> G
+  SV --> G
+  </pre>
+  <table class="help-table">
+    <thead><tr><th>Way</th><th>Steps</th><th>Saved</th></tr></thead>
+    <tbody>
+      <tr><td>Wizard</td><td>1 Prepare: <strong>Check and load</strong>, optionally download a backup · 2 Ring: press the buttons one after another, each appears as a row – choose entry, door, name, number; <em>Discard</em> removes a row · 3 Check · 4 <strong>Save to gateway</strong></td><td>in step 4</td></tr>
+      <tr><td>A · control unit</td><td>"Systemprogr." 3 s on the control unit, press the call button 3 s until the tone, <strong>Fetch call button</strong>, finally "Systemprogr." briefly. Do not hold the button longer – that deletes the door station's assignments.</td><td>by the gateway</td></tr>
+      <tr><td>B · capture</td><td><strong>Start capture</strong>, ring at the door, <strong>Apply</strong></td><td>needs Save to gateway</td></tr>
+      <tr><td>C · by phone</td><td>enter the code shown in the dialog on the phone, ring within 15 s</td><td>by the gateway</td></tr>
+      <tr><td>Log tab</td><td>start logging, ring, click <strong>Assign …</strong> next to the door call</td><td>needs Save to gateway</td></tr>
+    </tbody>
+  </table>
+  <p class="hint">Passive ways (wizard, B, log) need the gateway on the bus but no programming mode. Every door call
+    during the capture is detected – it really rings.</p>
+</section>
+
+<section id="h-pbx">
+  <h2>Connect and test a PBX</h2>
+  <p><strong>Configuration → Connect to PBX …</strong> sets the gateway up as an extension:</p>
+  <ol>
+    <li><em>Connection</em> – FRITZ!Box or other PBX; wiring and PBX setup are explained; <strong>Check and load</strong>.</li>
+    <li><em>Who rings?</em> – all phones at once (group call number) or a separate number per call button.</li>
+    <li><em>Times &amp; PIN</em> – ring duration, door talk time, PIN.</li>
+    <li><em>Check</em> – list of all changes, <strong>Save to gateway</strong>.</li>
+    <li><em>Done</em> – <strong>Test the connection now …</strong> and operating hints.</li>
+  </ol>
+  <p><strong>Configuration → Test PBX …</strong> offers two tests:</p>
+  <ul>
+    <li><strong>Test 1 · PBX → gateway</strong> (no bus needed): start, call the gateway from a phone of the PBX, wait
+      for the command tone (12–20 s), enter the code shown, hang up, click <strong>Check</strong>. The UI reads the
+      result back and resets the variant. Wait 60 s before calling again.</li>
+    <li><strong>Test 2 · Gateway → PBX</strong> (bus and a learned button needed): start, ring at the door; the checklist
+      shows door call, known button and the dialled number; answer whether the phones rang.</li>
+  </ul>
+</section>
+
+<section id="h-log">
+  <h2>Watch the bus (Log tab)</h2>
+  <ul>
+    <li><strong>Start</strong> / <strong>Stop</strong> switches logging; it occupies the serial port while running.</li>
+    <li><strong>Test output</strong> makes the gateway log <code>S: 90 …</code> – proves that logging works even without bus traffic.</li>
+    <li><strong>Show</strong> filters (door calls only, receives, sends, calls); <strong>Raw data</strong> and
+      <strong>Auto-scroll</strong> change the view; <strong>Save</strong> / <strong>Clear</strong>.</li>
+    <li>Door calls show the phonebook entry of the button, or <strong>Assign …</strong> for unknown buttons.</li>
+  </ul>
+  <table class="help-table">
+    <thead><tr><th>Line</th><th>Meaning</th></tr></thead>
+    <tbody>
+      <tr><td><code>E: 11 …</code></td><td>door call (contains the button address)</td></tr>
+      <tr><td><code>E: 21</code> / <code>E: 20</code></td><td>door call accepted / call end</td></tr>
+      <tr><td><code>S: 31 …</code></td><td>gateway opens the door</td></tr>
+      <tr><td><code>T: DIAL …</code></td><td>gateway dials a number</td></tr>
+    </tbody>
+  </table>
+  <p class="hint">Calls to the gateway and phone input are not logged. "No data for some seconds" is normal while
+    nothing happens on the bus.</p>
+</section>
+
+<section id="h-firmware">
+  <h2>Update firmware (Firmware tab)</h2>
+  <ol>
+    <li><strong>Read</strong> shows the versions of the gateway firmware and the bus driver.</li>
+    <li>Choose the file: <code>.tsk</code> for the gateway, <code>.hex</code> for the bus driver, then <strong>Transfer</strong>.</li>
+    <li>The gateway firmware restarts after approx. 5 s. The bus driver is erased at the start of its transfer.</li>
+  </ol>
+  <p class="notice"><strong>Only with a stable connection.</strong> If a transfer breaks off: check the connection,
+    power-cycle the gateway and transfer again. <strong>Bootloader reset</strong> is only useful when the gateway
+    is stuck in the bootloader. Firmware files are not included in this tool.</p>
+</section>
+
+<section id="h-more">
+  <h2>Phone codes, licenses, language</h2>
+  <ul>
+    <li><strong>Phone codes</strong> tab: all codes for programming and operating the gateway by phone, including
+      undocumented ones (e.g. opening a door: call the gateway, after the command tone <code>#</code> + door number).</li>
+    <li><strong>Licenses</strong> tab: third-party components of this installation with license texts;
+      <strong>Download SBOM</strong> saves a CycloneDX bill of materials.</li>
+    <li><strong>EN | DE</strong> in the header switches the language; the choice is remembered in this browser.</li>
+    <li>Each tab has its own address (e.g. <code>#help</code>), dialogs close with <kbd>Esc</kbd>.</li>
+  </ul>
+</section>
+
+<section id="h-trouble">
+  <h2>Troubleshooting</h2>
+  <table class="help-table">
+    <thead><tr><th>Symptom</th><th>What to do</th></tr></thead>
+    <tbody>
+      <tr><td>badge "no connection"</td><td>swap TX/RX; adapter on 5 V TTL; choose the right port; in the container check the device passthrough and permissions</td></tr>
+      <tr><td>"no bus driver" although it worked before</td><td>test the connection again – the tool switches off a logging mode left over from a previous session; otherwise power-cycle the gateway</td></tr>
+      <tr><td>buttons are greyed out</td><td>a job or logging is running – wait or stop logging</td></tr>
+      <tr><td>"The serial port is busy"</td><td>stop logging or wait for the running job</td></tr>
+      <tr><td>changes are gone after a restart</td><td>they were not saved – use <strong>Save to gateway</strong></td></tr>
+      <tr><td>orange notice does not disappear</td><td>assigned call buttons are not yet written – stop logging, <strong>Save phonebook to gateway</strong></td></tr>
+      <tr><td>Test 1 finds no change</td><td>connection type must be <em>PBX extension</em>; the PBX must ring ≥ 25 s; wait 60 s between calls</td></tr>
+      <tr><td>the log stays empty</td><td>normal without bus traffic – <strong>Test output</strong> checks it</td></tr>
+    </tbody>
+  </table>
+</section>
+
+<section id="h-docs">
+  <h2>Further documentation</h2>
+  <p>Background that is not about operating this tool – how the TKS and the gateway work, door calls, opening
+    the door via SIP, command mode, the protocol and the hardware – is in the documentation of the project
+    repository:</p>
+  <ul>
+    <li><code>docs/USER_GUIDE.md</code> – system overview, procedures, SIP door opening, phone codes</li>
+    <li><code>docs/UI.md</code> – reference of every tab, dialog and button</li>
+    <li><code>docs/PROTOCOL.md</code>, <code>docs/HARDWARE.md</code> – protocol, firmware and hardware findings</li>
+  </ul>
+</section>
+
+</div>
